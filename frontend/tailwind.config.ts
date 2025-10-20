@@ -1,0 +1,197 @@
+import { type Config } from 'tailwindcss'
+
+const config: Config = {
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
+  theme: {
+    extend: {
+      colors: {
+        border: 'hsl(var(--border))',
+        input: 'hsl(var(--input))',
+        ring: 'hsl(var(--ring))',
+        background: 'hsl(var(--background))',
+        foreground: 'hsl(var(--foreground))',
+        primary: {
+          DEFAULT: 'hsl(var(--primary))',
+          foreground: 'hsl(var(--primary-foreground))',
+          50: 'hsl(var(--primary-50))',
+          100: 'hsl(var(--primary-100))',
+          200: 'hsl(var(--primary-200))',
+          300: 'hsl(var(--primary-300))',
+          400: 'hsl(var(--primary-400))',
+          500: 'hsl(var(--primary-500))',
+          600: 'hsl(var(--primary-600))',
+          700: 'hsl(var(--primary-700))',
+          800: 'hsl(var(--primary-800))',
+          900: 'hsl(var(--primary-900))',
+          950: 'hsl(var(--primary-950))',
+        },
+        secondary: {
+          DEFAULT: 'hsl(var(--secondary))',
+          foreground: 'hsl(var(--secondary-foreground))',
+          50: 'hsl(var(--secondary-50))',
+          100: 'hsl(var(--secondary-100))',
+          200: 'hsl(var(--secondary-200))',
+          300: 'hsl(var(--secondary-300))',
+          400: 'hsl(var(--secondary-400))',
+          500: 'hsl(var(--secondary-500))',
+          600: 'hsl(var(--secondary-600))',
+          700: 'hsl(var(--secondary-700))',
+          800: 'hsl(var(--secondary-800))',
+          900: 'hsl(var(--secondary-900))',
+          950: 'hsl(var(--secondary-950))',
+        },
+        destructive: {
+          DEFAULT: 'hsl(var(--destructive))',
+          foreground: 'hsl(var(--destructive-foreground))',
+        },
+        muted: {
+          DEFAULT: 'hsl(var(--muted))',
+          foreground: 'hsl(var(--muted-foreground))',
+        },
+        accent: {
+          DEFAULT: 'hsl(var(--accent))',
+          foreground: 'hsl(var(--accent-foreground))',
+        },
+        popover: {
+          DEFAULT: 'hsl(var(--popover))',
+          foreground: 'hsl(var(--popover-foreground))',
+        },
+        card: {
+          DEFAULT: 'hsl(var(--card))',
+          foreground: 'hsl(var(--card-foreground))',
+        },
+        // VTMS specific colors
+        success: {
+          DEFAULT: 'hsl(var(--success))',
+          foreground: 'hsl(var(--success-foreground))',
+          50: 'hsl(var(--success-50))',
+          100: 'hsl(var(--success-100))',
+          200: 'hsl(var(--success-200))',
+          300: 'hsl(var(--success-300))',
+          400: 'hsl(var(--success-400))',
+          500: 'hsl(var(--success-500))',
+          600: 'hsl(var(--success-600))',
+          700: 'hsl(var(--success-700))',
+          800: 'hsl(var(--success-800))',
+          900: 'hsl(var(--success-900))',
+        },
+        warning: {
+          DEFAULT: 'hsl(var(--warning))',
+          foreground: 'hsl(var(--warning-foreground))',
+          50: 'hsl(var(--warning-50))',
+          100: 'hsl(var(--warning-100))',
+          200: 'hsl(var(--warning-200))',
+          300: 'hsl(var(--warning-300))',
+          400: 'hsl(var(--warning-400))',
+          500: 'hsl(var(--warning-500))',
+          600: 'hsl(var(--warning-600))',
+          700: 'hsl(var(--warning-700))',
+          800: 'hsl(var(--warning-800))',
+          900: 'hsl(var(--warning-900))',
+        },
+        danger: {
+          DEFAULT: 'hsl(var(--danger))',
+          foreground: 'hsl(var(--danger-foreground))',
+          50: 'hsl(var(--danger-50))',
+          100: 'hsl(var(--danger-100))',
+          200: 'hsl(var(--danger-200))',
+          300: 'hsl(var(--danger-300))',
+          400: 'hsl(var(--danger-400))',
+          500: 'hsl(var(--danger-500))',
+          600: 'hsl(var(--danger-600))',
+          700: 'hsl(var(--danger-700))',
+          800: 'hsl(var(--danger-800))',
+          900: 'hsl(var(--danger-900))',
+        },
+        // Alert level colors
+        'alert-info': 'hsl(var(--alert-info))',
+        'alert-warning': 'hsl(var(--alert-warning))',
+        'alert-danger': 'hsl(var(--alert-danger))',
+        'alert-critical': 'hsl(var(--alert-critical))',
+        // Vessel type colors
+        'vessel-cargo': 'hsl(var(--vessel-cargo))',
+        'vessel-tanker': 'hsl(var(--vessel-tanker))',
+        'vessel-passenger': 'hsl(var(--vessel-passenger))',
+        'vessel-fishing': 'hsl(var(--vessel-fishing))',
+        'vessel-military': 'hsl(var(--vessel-military))',
+        'vessel-other': 'hsl(var(--vessel-other))',
+      },
+      borderRadius: {
+        lg: 'var(--radius)',
+        md: 'calc(var(--radius) - 2px)',
+        sm: 'calc(var(--radius) - 4px)',
+      },
+      fontFamily: {
+        sans: ['Inter', 'ui-sans-serif', 'system-ui'],
+        mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
+      },
+      keyframes: {
+        'accordion-down': {
+          from: { height: '0' },
+          to: { height: 'var(--radix-accordion-content-height)' },
+        },
+        'accordion-up': {
+          from: { height: 'var(--radix-accordion-content-height)' },
+          to: { height: '0' },
+        },
+        'fade-in': {
+          from: { opacity: '0' },
+          to: { opacity: '1' },
+        },
+        'fade-out': {
+          from: { opacity: '1' },
+          to: { opacity: '0' },
+        },
+        'slide-in-up': {
+          from: { transform: 'translateY(20px)', opacity: '0' },
+          to: { transform: 'translateY(0)', opacity: '1' },
+        },
+        'slide-in-down': {
+          from: { transform: 'translateY(-20px)', opacity: '0' },
+          to: { transform: 'translateY(0)', opacity: '1' },
+        },
+        'pulse-slow': {
+          '0%, 100%': { opacity: '1' },
+          '50%': { opacity: '0.5' },
+        },
+        'bounce-slow': {
+          '0%, 100%': { transform: 'translateY(-25%)', animationTimingFunction: 'cubic-bezier(0.8, 0, 1, 1)' },
+          '50%': { transform: 'translateY(0)', animationTimingFunction: 'cubic-bezier(0, 0, 0.2, 1)' },
+        },
+      },
+      animation: {
+        'accordion-down': 'accordion-down 0.2s ease-out',
+        'accordion-up': 'accordion-up 0.2s ease-out',
+        'fade-in': 'fade-in 0.3s ease-in-out',
+        'fade-out': 'fade-out 0.3s ease-in-out',
+        'slide-in-up': 'slide-in-up 0.3s ease-out',
+        'slide-in-down': 'slide-in-down 0.3s ease-out',
+        'pulse-slow': 'pulse-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'bounce-slow': 'bounce-slow 2s infinite',
+        'spin-slow': 'spin 3s linear infinite',
+      },
+      spacing: {
+        '18': '4.5rem',
+        '88': '22rem',
+        '128': '32rem',
+      },
+      maxWidth: {
+        '8xl': '88rem',
+        '9xl': '96rem',
+      },
+      zIndex: {
+        '60': '60',
+        '70': '70',
+        '80': '80',
+        '90': '90',
+        '100': '100',
+      },
+    },
+  },
+  plugins: [],
+}
+
+export default config
