@@ -1,6 +1,6 @@
 # VTMS - Vessel Traffic Management System
 
-A modern, real-time vessel traffic management system built with React, TypeScript, and Node.js. This prototype demonstrates advanced maritime traffic monitoring, collision detection, and vessel tracking capabilities.
+A modern, real-time vessel traffic management system built with React, TypeScript, and Node.js. Available as both a web application and an **Electron desktop application** with native features. This prototype demonstrates advanced maritime traffic monitoring, collision detection, and vessel tracking capabilities.
 
 ## 🚢 Features
 

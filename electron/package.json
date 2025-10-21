@@ -1,0 +1,17 @@
+{
+  "name": "vtms-electron",
+  "version": "1.0.0",
+  "description": "VTMS Electron main process",
+  "main": "../dist-electron/main.js",
+  "type": "module",
+  "author": "Niyaz Huseyn-zada",
+  "license": "MIT",
+  "scripts": {
+    "type-check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^24.9.0",
+    "electron": "^33.2.1",
+    "typescript": "^5.9.3"
+  }
+}

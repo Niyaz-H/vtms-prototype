@@ -46,5 +46,15 @@ tmp/
 .bun/
 bun.lockb
 
+# Electron
+dist-electron/
+release/
+*.dmg
+*.exe
+*.AppImage
+*.deb
+*.rpm
+out/
+
 # Claude AI files
 CLAUDE.md
