@@ -4,6 +4,10 @@
 
 This document outlines the architecture of a comprehensive VTMS prototype designed to showcase advanced maritime traffic monitoring capabilities. The system demonstrates real-time vessel tracking, collision detection, and interactive visualization capabilities that align with Marintel's core business focus.
 
+**The system is available in two deployment modes:**
+1. **Web Application**: Traditional client-server architecture with separate frontend and backend
+2. **Desktop Application**: Electron-based native app with integrated backend server
+
 ## System Overview
 
 The VTMS prototype is a full-stack application that:
@@ -12,6 +16,7 @@ The VTMS prototype is a full-stack application that:
 - Implements collision detection algorithms with configurable safety zones
 - Provides real-time WebSocket updates to connected clients
 - Offers an interactive web dashboard with map visualization
+- **NEW**: Packaged as a cross-platform desktop application (Windows, macOS, Linux)
 
 ## Technology Stack
 
