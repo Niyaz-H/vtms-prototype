@@ -416,7 +416,7 @@ export class WebSocketService {
   }
 
   /**
-   * Start broadcasting system stats periodically
+   * Start broadcasting system stats and vessels periodically
    */
   private startStatsBroadcast(): void {
     this.statsInterval = setInterval(async () => {
@@ -455,10 +455,20 @@ export class WebSocketService {
           data: stats,
           timestamp: new Date()
         });
+
+        // Broadcast all vessels to connected clients
+        const allVessels = await vesselStore.getAllVessels();
+        if (allVessels.length > 0) {
+          this.io.emit('vessels', {
+            type: 'vessels',
+            data: allVessels,
+            timestamp: new Date()
+          });
+        }
       } catch (error) {
         console.error('Failed to broadcast system stats:', error);
       }
-    }, 30000); // Every 30 seconds
+    }, 5000); // Every 5 seconds to match simulation update interval
   }
 
   /**

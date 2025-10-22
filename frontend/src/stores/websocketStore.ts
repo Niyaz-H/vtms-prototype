@@ -44,11 +44,20 @@ export const useWebSocketStore = create<VesselState & VesselActions>()(
     lastUpdate: Date.now(),
     
     initializeWebSocket: (socket: any) => {
+      console.log('[WebSocketStore] Initializing with socket:', socket)
+      console.log('[WebSocketStore] Socket connected status:', socket?.connected)
+      
+      // Set initial connection state
       set({ socket, connected: socket?.connected || false })
       
       if (socket) {
-        socket.on('vessels', (vessels: Vessel[]) => {
-          set({ vessels, lastUpdate: Date.now() })
+        console.log('[WebSocketStore] Setting up event listeners')
+        
+        socket.on('vessels', (data: any) => {
+          console.log('[WebSocketStore] Received vessels event:', data)
+          const vessels = Array.isArray(data) ? data : data.data || []
+          console.log('[WebSocketStore] Updating vessels, count:', vessels.length)
+          set({ vessels, lastUpdate: Date.now(), connected: true })
         })
         
         socket.on('vessel_update', (data: any) => {
@@ -112,10 +121,12 @@ export const useWebSocketStore = create<VesselState & VesselActions>()(
         })
         
         socket.on('connect', () => {
+          console.log('[WebSocketStore] Socket connected')
           set({ connected: true })
         })
         
         socket.on('disconnect', () => {
+          console.log('[WebSocketStore] Socket disconnected')
           set({ connected: false })
         })
       }

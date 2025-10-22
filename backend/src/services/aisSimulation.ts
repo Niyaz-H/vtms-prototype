@@ -107,14 +107,27 @@ export class AISSimulation {
   }
 
   /**
-   * Generate random position within simulation bounds
+   * Generate random position within simulation bounds (Caspian Sea water areas only)
+   * Using more restrictive boundaries to avoid land
    */
   private generateRandomPosition(): { latitude: number; longitude: number } {
+    // Define water-only zones in the Caspian Sea (Azerbaijan region)
+    // These are tighter boundaries to ensure vessels stay in deep water
+    const waterZones = [
+      // Southern Caspian (main deep water body)
+      { south: 39.0, north: 40.3, west: 49.3, east: 50.2 },
+      // Central Caspian (deeper section)
+      { south: 40.3, north: 41.2, west: 49.5, east: 50.8 },
+      // Eastern basin
+      { south: 39.5, north: 40.8, west: 50.2, east: 51.0 }
+    ];
+    
+    // Randomly select a water zone
+    const zone = waterZones[Math.floor(Math.random() * waterZones.length)];
+    
     return {
-      latitude: aisSimulationConfig.areaBounds.south + 
-               Math.random() * (aisSimulationConfig.areaBounds.north - aisSimulationConfig.areaBounds.south),
-      longitude: aisSimulationConfig.areaBounds.west + 
-                Math.random() * (aisSimulationConfig.areaBounds.east - aisSimulationConfig.areaBounds.west)
+      latitude: zone.south + Math.random() * (zone.north - zone.south),
+      longitude: zone.west + Math.random() * (zone.east - zone.west)
     };
   }
 
@@ -279,7 +292,10 @@ export class AISSimulation {
       }
     }
 
-    console.log(`Updated ${updatedVessels.length} vessels`);
+    console.log(`Updated ${updatedVessels.length} vessels in Caspian Sea region`);
+    
+    // Notify that vessels are available (will be picked up by WebSocket service)
+    return;
   }
 
   /**
@@ -324,12 +340,14 @@ export class AISSimulation {
     const timeHours = aisSimulationConfig.updateInterval / (1000 * 60 * 60); // Convert ms to hours
     const distanceTraveled = vessel.speed * timeHours; // Distance in NM
 
-    const newPosition = this.calculatePositionFromBearing(
+    let newPosition = this.calculatePositionFromBearing(
       vessel.position,
       bearing,
       distanceTraveled
     );
 
+    // Ensure vessel stays in water
+    newPosition = this.ensureWaterPosition(newPosition);
     vessel.position = newPosition;
 
     // Occasionally change status for realism
@@ -418,6 +436,29 @@ export class AISSimulation {
    */
   private toDegrees(radians: number): number {
     return radians * (180 / Math.PI);
+  }
+
+  /**
+   * Ensure position is within valid water bounds (Caspian Sea only)
+   * Tighter boundaries to keep vessels in deep water away from shores
+   */
+  private ensureWaterPosition(position: { latitude: number; longitude: number }): { latitude: number; longitude: number } {
+    // Define water area boundaries (Caspian Sea deep water only)
+    const waterBounds = {
+      south: 39.0,
+      north: 41.2,
+      west: 49.3,
+      east: 51.0
+    };
+    
+    // Clamp to water boundaries
+    const correctedLat = Math.max(waterBounds.south, Math.min(waterBounds.north, position.latitude));
+    const correctedLon = Math.max(waterBounds.west, Math.min(waterBounds.east, position.longitude));
+    
+    return {
+      latitude: correctedLat,
+      longitude: correctedLon
+    };
   }
 
   /**

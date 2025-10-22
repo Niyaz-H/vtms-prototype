@@ -30,8 +30,14 @@ class VTMServer {
     this.app = express();
     this.server = createServer(this.app);
     this.io = new SocketIOServer(this.server, {
-      cors: config.websocket.cors,
-      path: config.websocket.path
+      cors: {
+        origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
+        methods: ['GET', 'POST'],
+        credentials: true
+      },
+      path: config.websocket.path,
+      transports: ['websocket', 'polling'],
+      allowEIO3: true
     });
 
     this.setupMiddleware();

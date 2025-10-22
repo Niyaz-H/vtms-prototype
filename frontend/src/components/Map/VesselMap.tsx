@@ -1,9 +1,13 @@
 import { useEffect, useRef, useState, useMemo, memo } from 'react'
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap, CircleMarker } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { useWebSocketStore } from '@/stores/websocketStore'
 import type { Vessel } from '@/types/vessel'
+
+// Store vessel position history
+const vesselHistoryMap = new Map<number, Array<{lat: number, lon: number, timestamp: number}>>()
+const MAX_HISTORY_LENGTH = 10 // Keep last 10 positions
 
 // Fix for default marker icons in Leaflet with Vite
 delete (L.Icon.Default.prototype as any)._getIconUrl
@@ -45,6 +49,75 @@ const MapUpdater = memo<{ center: [number, number]; zoom: number }>(({ center, z
 
 MapUpdater.displayName = 'MapUpdater'
 
+// Component to show coordinate grid
+const CoordinateGrid = memo(() => {
+  const map = useMap()
+  
+  useEffect(() => {
+    // Create coordinate grid overlay
+    const gridLayer = L.layerGroup()
+    
+    // Grid configuration for Caspian Sea
+    const latMin = 38.5
+    const latMax = 42
+    const lonMin = 48.5
+    const lonMax = 51.5
+    const gridStep = 0.5 // Half degree steps
+    
+    // Draw latitude lines with labels
+    for (let lat = latMin; lat <= latMax; lat += gridStep) {
+      const latLine = L.polyline(
+        [[lat, lonMin], [lat, lonMax]],
+        { color: '#94a3b8', weight: 1, opacity: 0.3, dashArray: '5, 5' }
+      )
+      
+      // Add latitude label
+      const latLabel = L.marker([lat, lonMin + 0.1], {
+        icon: L.divIcon({
+          className: 'coordinate-label',
+          html: `<div style="background: rgba(255,255,255,0.8); padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 600; color: #1e293b; white-space: nowrap;">${lat.toFixed(1)}°N</div>`,
+          iconSize: [60, 20],
+          iconAnchor: [0, 10]
+        })
+      })
+      
+      gridLayer.addLayer(latLine)
+      gridLayer.addLayer(latLabel)
+    }
+    
+    // Draw longitude lines with labels
+    for (let lon = lonMin; lon <= lonMax; lon += gridStep) {
+      const lonLine = L.polyline(
+        [[latMin, lon], [latMax, lon]],
+        { color: '#94a3b8', weight: 1, opacity: 0.3, dashArray: '5, 5' }
+      )
+      
+      // Add longitude label
+      const lonLabel = L.marker([latMin + 0.1, lon], {
+        icon: L.divIcon({
+          className: 'coordinate-label',
+          html: `<div style="background: rgba(255,255,255,0.8); padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 600; color: #1e293b; white-space: nowrap;">${lon.toFixed(1)}°E</div>`,
+          iconSize: [60, 20],
+          iconAnchor: [0, 10]
+        })
+      })
+      
+      gridLayer.addLayer(lonLine)
+      gridLayer.addLayer(lonLabel)
+    }
+    
+    gridLayer.addTo(map)
+    
+    return () => {
+      gridLayer.remove()
+    }
+  }, [map])
+  
+  return null
+})
+
+CoordinateGrid.displayName = 'CoordinateGrid'
+
 interface VesselMapProps {
   className?: string
   onVesselClick?: (vessel: Vessel) => void
@@ -57,9 +130,31 @@ const VesselMap = memo<VesselMapProps>(({
   selectedVesselId
 }) => {
   const { vessels, alerts } = useWebSocketStore()
-  const [center, setCenter] = useState<[number, number]>([40.7128, -74.0060]) // New York default
-  const [zoom, setZoom] = useState(10)
+  // Caspian Sea Azerbaijan border - center coordinates
+  const [center, setCenter] = useState<[number, number]>([40.0, 49.0])
+  const [zoom, setZoom] = useState(8)
+  const [showTrajectories, setShowTrajectories] = useState(true)
   const mapRef = useRef<L.Map>(null)
+
+  // Update vessel history
+  useEffect(() => {
+    vessels.forEach(vessel => {
+      const history = vesselHistoryMap.get(vessel.mmsi) || []
+      const newPoint = {
+        lat: vessel.position.latitude,
+        lon: vessel.position.longitude,
+        timestamp: Date.now()
+      }
+      
+      // Add new point and keep only recent history
+      history.push(newPoint)
+      if (history.length > MAX_HISTORY_LENGTH) {
+        history.shift()
+      }
+      
+      vesselHistoryMap.set(vessel.mmsi, history)
+    })
+  }, [vessels])
 
   // Memoize alert level lookup - prevents recalculation on every render
   const vesselAlertLevels = useMemo(() => {
@@ -139,6 +234,137 @@ const VesselMap = memo<VesselMapProps>(({
       })
   }, [alerts, vessels])
 
+  // Calculate future position (trajectory prediction)
+  const calculateFuturePosition = (vessel: Vessel, minutesAhead: number): [number, number] => {
+    if (!vessel.speed || vessel.speed < 0.5) {
+      return [vessel.position.latitude, vessel.position.longitude]
+    }
+    
+    const distanceNM = (vessel.speed * minutesAhead) / 60
+    const courseRad = (vessel.course || 0) * (Math.PI / 180)
+    
+    const latChange = (distanceNM / 60) * Math.cos(courseRad)
+    const lonChange = (distanceNM / 60) * Math.sin(courseRad) / Math.cos(vessel.position.latitude * Math.PI / 180)
+    
+    return [
+      vessel.position.latitude + latChange,
+      vessel.position.longitude + lonChange
+    ]
+  }
+
+  // Memoize trajectory lines
+  const trajectoryLines = useMemo(() => {
+    if (!showTrajectories) return []
+    
+    return vessels.flatMap(vessel => {
+      const history = vesselHistoryMap.get(vessel.mmsi) || []
+      if (history.length < 2) return []
+      
+      const alertLevel = vesselAlertLevels.get(vessel.mmsi)
+      const color = alertLevel === 'critical' ? '#dc2626'
+        : alertLevel === 'danger' ? '#ea580c'
+        : alertLevel === 'warning' ? '#eab308'
+        : '#3b82f6'
+      
+      const elements = []
+      
+      // Historical track
+      elements.push(
+        <Polyline
+          key={`history-${vessel.mmsi}`}
+          positions={history.map(h => [h.lat, h.lon])}
+          pathOptions={{
+            color,
+            weight: 2,
+            opacity: 0.4,
+            dashArray: '2, 4'
+          }}
+        />
+      )
+      
+      // Future trajectory
+      const futurePositions = [
+        [vessel.position.latitude, vessel.position.longitude] as [number, number],
+        calculateFuturePosition(vessel, 5),
+        calculateFuturePosition(vessel, 10),
+        calculateFuturePosition(vessel, 15)
+      ]
+      
+      elements.push(
+        <Polyline
+          key={`future-${vessel.mmsi}`}
+          positions={futurePositions}
+          pathOptions={{
+            color,
+            weight: 2,
+            opacity: 0.6,
+            dashArray: '10, 5'
+          }}
+        />
+      )
+      
+      // Prediction markers
+      ;[5, 10, 15].forEach((minutes, idx) => {
+        const pos = calculateFuturePosition(vessel, minutes)
+        elements.push(
+          <CircleMarker
+            key={`pred-${vessel.mmsi}-${minutes}`}
+            center={pos}
+            radius={3}
+            pathOptions={{
+              fillColor: color,
+              fillOpacity: 0.6 - (idx * 0.15),
+              color: 'white',
+              weight: 1
+            }}
+          >
+            <Popup>
+              <div className="text-xs">
+                <p className="font-semibold">{vessel.name}</p>
+                <p>Predicted position in {minutes} min</p>
+              </div>
+            </Popup>
+          </CircleMarker>
+        )
+      })
+      
+      return elements
+    })
+  }, [vessels, vesselAlertLevels, showTrajectories])
+
+  // Memoize collision points
+  const collisionPoints = useMemo(() => {
+    return alerts
+      .filter(alert => !alert.resolved && alert.predictedCollisionPoint)
+      .map(alert => {
+        const cp = alert.predictedCollisionPoint!
+        return (
+          <CircleMarker
+            key={`collision-${alert.id}`}
+            center={[cp.latitude, cp.longitude]}
+            radius={8}
+            pathOptions={{
+              fillColor: '#dc2626',
+              fillOpacity: 0.8,
+              color: '#ffffff',
+              weight: 2
+            }}
+          >
+            <Popup>
+              <div className="text-xs">
+                <p className="font-semibold text-red-600">⚠️ Collision Risk</p>
+                <p>Level: {alert.level.toUpperCase()}</p>
+                <p>Distance: {alert.proximity.distance.toFixed(2)} NM</p>
+                {alert.proximity.tcpa && (
+                  <p>TCPA: {alert.proximity.tcpa.toFixed(1)} min</p>
+                )}
+              </div>
+            </Popup>
+          </CircleMarker>
+        )
+      })
+  }, [alerts])
+
   // Memoize vessel markers rendering
   const vesselMarkers = useMemo(() => {
     return vessels.map((vessel) => {
@@ -163,6 +389,7 @@ const VesselMap = memo<VesselMapProps>(({
                 <p><strong>Speed:</strong> {vessel.speed?.toFixed(1) || 0} knots</p>
                 <p><strong>Course:</strong> {vessel.course?.toFixed(0) || 0}°</p>
                 <p><strong>Heading:</strong> {vessel.heading?.toFixed(0) || 0}°</p>
+                <p><strong>Position:</strong> {vessel.position.latitude.toFixed(4)}°N, {vessel.position.longitude.toFixed(4)}°E</p>
                 {alertLevel && (
                   <p className="mt-2 text-danger font-semibold">
                     ⚠️ {alertLevel.toUpperCase()} ALERT
@@ -177,11 +404,11 @@ const VesselMap = memo<VesselMapProps>(({
   }, [vessels, vesselAlertLevels, onVesselClick])
 
   return (
-    <div className={`relative ${className}`}>
+    <div className={`relative ${className}`} style={{ height: '100%', width: '100%' }}>
       <MapContainer
         center={center}
         zoom={zoom}
-        style={{ height: '100%', width: '100%' }}
+        style={{ height: '100%', width: '100%', minHeight: '500px' }}
         ref={mapRef}
       >
         <MapUpdater center={center} zoom={zoom} />
@@ -190,6 +417,15 @@ const VesselMap = memo<VesselMapProps>(({
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+
+        {/* Coordinate Grid Overlay */}
+        <CoordinateGrid />
+
+        {/* Render trajectory lines and predictions */}
+        {trajectoryLines}
+
+        {/* Render collision points */}
+        {collisionPoints}
 
         {/* Render alert lines */}
         {alertLines}
@@ -211,6 +447,17 @@ const VesselMap = memo<VesselMapProps>(({
           className="block w-full px-3 py-1 text-sm font-medium text-secondary-700 hover:bg-secondary-100 rounded"
         >
           −
+        </button>
+        <button
+          onClick={() => setShowTrajectories(!showTrajectories)}
+          className={`block w-full px-3 py-1 text-xs font-medium rounded ${
+            showTrajectories
+              ? 'bg-primary-500 text-white'
+              : 'text-secondary-700 hover:bg-secondary-100'
+          }`}
+          title="Toggle vessel trajectories"
+        >
+          📍
         </button>
       </div>
 

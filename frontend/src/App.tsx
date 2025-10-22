@@ -24,17 +24,42 @@ function App() {
 
   // Initialize WebSocket connection
   useEffect(() => {
+    let mounted = true
+    let connectionTimeout: NodeJS.Timeout
+    
     const initWebSocket = async () => {
+      // Small delay to allow React StrictMode double-mount to complete
+      await new Promise(resolve => setTimeout(resolve, 200))
+      
+      if (!mounted) {
+        console.log('[App] Component unmounted during connection delay, aborting')
+        return
+      }
+      
       try {
+        console.log('[App] Initializing WebSocket connection...')
         await webSocketService.connect()
-        initializeWebSocket(webSocketService)
         
-        // Authenticate if user is logged in
-        if (isAuthenticated && user?.token) {
-          webSocketService.authenticate(user.token, user.id)
+        if (mounted) {
+          initializeWebSocket(webSocketService)
+          console.log('[App] WebSocket initialized successfully')
+          
+          // Authenticate if user is logged in
+          if (isAuthenticated && user?.token) {
+            webSocketService.authenticate(user.token, user.id)
+          }
         }
       } catch (error) {
-        console.error('Failed to initialize WebSocket:', error)
+        console.error('[App] Failed to initialize WebSocket:', error)
+        // Retry connection after a delay
+        if (mounted) {
+          console.log('[App] Retrying connection in 3 seconds...')
+          connectionTimeout = setTimeout(() => {
+            if (mounted) {
+              initWebSocket()
+            }
+          }, 3000)
+        }
       }
     }
 
@@ -42,9 +67,21 @@ function App() {
 
     // Cleanup on unmount
     return () => {
+      mounted = false
+      if (connectionTimeout) {
+        clearTimeout(connectionTimeout)
+      }
+      console.log('[App] Cleaning up WebSocket connection')
       webSocketService.disconnect()
     }
-  }, [isAuthenticated, user, initializeWebSocket])
+  }, []) // Remove dependencies to prevent reconnection on every render
+  
+  // Separate effect for authentication
+  useEffect(() => {
+    if (isAuthenticated && user?.token && webSocketService.connected) {
+      webSocketService.authenticate(user.token, user.id)
+    }
+  }, [isAuthenticated, user])
 
   return (
     <div className="min-h-screen bg-background">

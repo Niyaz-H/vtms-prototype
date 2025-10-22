@@ -80,14 +80,15 @@ export const collisionDetectionConfig = {
   updateInterval: config.collisionDetection.updateInterval,
 };
 
-// AIS simulation configuration
+// AIS simulation configuration - Caspian Sea Azerbaijan region
 export const aisSimulationConfig = {
-  vesselCount: parseInt(process.env.AIS_SIMULATION_VESSELS || '100', 10),
+  vesselCount: parseInt(process.env.AIS_SIMULATION_VESSELS || '50', 10),
   areaBounds: {
-    north: parseFloat(process.env.AIS_SIMULATION_NORTH || '60.0'),
-    south: parseFloat(process.env.AIS_SIMULATION_SOUTH || '50.0'),
-    east: parseFloat(process.env.AIS_SIMULATION_EAST || '30.0'),
-    west: parseFloat(process.env.AIS_SIMULATION_WEST || '10.0'),
+    // Caspian Sea Azerbaijan border coordinates
+    north: parseFloat(process.env.AIS_SIMULATION_NORTH || '41.5'),
+    south: parseFloat(process.env.AIS_SIMULATION_SOUTH || '38.5'),
+    east: parseFloat(process.env.AIS_SIMULATION_EAST || '50.5'),
+    west: parseFloat(process.env.AIS_SIMULATION_WEST || '47.5'),
   },
   speedRange: {
     min: parseFloat(process.env.AIS_SIMULATION_SPEED_MIN || '5.0'),

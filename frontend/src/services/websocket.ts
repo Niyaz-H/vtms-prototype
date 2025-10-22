@@ -35,21 +35,65 @@ class WebSocketService {
    */
   connect(): Promise<void> {
     return new Promise((resolve, reject) => {
+      console.log('[WebSocket] Attempting to connect to:', WS_URL)
+      
+      // If already connected, resolve immediately
       if (this.socket?.connected) {
+        console.log('[WebSocket] Already connected')
         resolve()
         return
       }
 
-      if (this.isConnecting) {
-        reject(new Error('Connection already in progress'))
+      // If socket exists but not connected, try to reconnect it
+      if (this.socket && !this.socket.connected) {
+        console.log('[WebSocket] Socket exists, reconnecting...')
+        this.isConnecting = true
+        
+        const onConnect = () => {
+          console.log('[WebSocket] Successfully reconnected!')
+          this.isConnecting = false
+          this.reconnectAttempts = 0
+          this.socket?.off('connect', onConnect)
+          this.socket?.off('connect_error', onError)
+          resolve()
+        }
+        
+        const onError = (error: Error) => {
+          console.error('[WebSocket] Reconnection error:', error)
+          this.isConnecting = false
+          this.socket?.off('connect', onConnect)
+          this.socket?.off('connect_error', onError)
+          reject(error)
+        }
+        
+        this.socket.once('connect', onConnect)
+        this.socket.once('connect_error', onError)
+        this.socket.connect()
         return
       }
 
+      // If currently connecting, wait for it
+      if (this.isConnecting) {
+        console.log('[WebSocket] Connection already in progress, waiting...')
+        // Wait for the connection to complete
+        const checkConnection = setInterval(() => {
+          if (this.socket?.connected) {
+            clearInterval(checkConnection)
+            resolve()
+          } else if (!this.isConnecting) {
+            clearInterval(checkConnection)
+            reject(new Error('Connection failed'))
+          }
+        }, 100)
+        return
+      }
+
+      // Create new socket connection
       this.isConnecting = true
 
       try {
         this.socket = io(WS_URL, {
-          autoConnect: this.config.autoConnect,
+          autoConnect: false,
           reconnection: this.config.reconnection,
           reconnectionDelay: this.config.reconnectionDelay,
           reconnectionAttempts: this.config.reconnectionAttempts,
@@ -57,10 +101,11 @@ class WebSocketService {
           transports: ['websocket', 'polling'],
         })
 
+        console.log('[WebSocket] Socket.IO instance created, connecting...')
         this.setupEventListeners()
 
         this.socket.on('connect', () => {
-          console.log('WebSocket connected')
+          console.log('[WebSocket] Successfully connected!')
           this.isConnecting = false
           this.reconnectAttempts = 0
           toast.success('Connected to real-time updates')
@@ -68,12 +113,17 @@ class WebSocketService {
         })
 
         this.socket.on('connect_error', (error) => {
-          console.error('WebSocket connection error:', error)
+          console.error('[WebSocket] Connection error:', error)
           this.isConnecting = false
           toast.error('Failed to connect to real-time updates')
           reject(error)
         })
+        
+        // Manually initiate the connection
+        this.socket.connect()
+        console.log('[WebSocket] Connection initiated')
       } catch (error) {
+        console.error('[WebSocket] Exception during connection:', error)
         this.isConnecting = false
         reject(error)
       }
