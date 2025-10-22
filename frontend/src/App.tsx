@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
-import { useQuery } from 'react-query'
+import { useQuery } from '@tanstack/react-query'
 
 import Layout from '@/components/Layout'
 import Dashboard from '@/pages/Dashboard'
@@ -44,18 +44,16 @@ function App() {
   }, [isAuthenticated, user, initializeWebSocket])
 
   // Check system health on app load
-  const { data: healthData, error: healthError } = useQuery(
-    'health',
-    async () => {
+  const { data: healthData, error: healthError } = useQuery({
+    queryKey: ['health'],
+    queryFn: async () => {
       const response = await fetch('/api/health')
       if (!response.ok) throw new Error('Health check failed')
-      return response.json()
+      return response.json() as Promise<{ status: string }>
     },
-    {
-      refetchInterval: 60000, // Refetch every minute
-      retry: 3,
-    }
-  )
+    refetchInterval: 60000, // Refetch every minute
+    retry: 3,
+  })
 
   // Show connection status
   const connectionStatus = webSocketService.getStatus()
