@@ -9,12 +9,13 @@ A modern, real-time vessel traffic management system built with React, TypeScrip
 - **Collision Detection**: Advanced algorithm for detecting potential vessel collisions
 - **Suspicious Activity Detection**: AI-powered detection of rendezvous meetings and loitering behavior
 - **Alert Lifecycle Management**: Full workflow from detection to resolution (NEW → ACKNOWLEDGED → INVESTIGATING → RESOLVED)
-- **Alert Management**: Comprehensive alert system with multiple severity levels and action buttons
-- **Real-time Notifications**: Toast notifications for immediate awareness of suspicious activities
+- **Alert Management**: Comprehensive alert system with multiple severity levels and functional action buttons
+- **Real-time Notifications**: Smart toast notifications (max 3 at once) with auto-dismiss functionality
 - **System Monitoring**: Real-time system health and performance metrics
 - **Simulation Mode**: Test and demonstrate system capabilities with simulated vessels
 - **Responsive Design**: Works seamlessly on desktop and mobile devices
 - **WebSocket Integration**: Live data updates without page refresh
+- **⚡ Performance Optimized**: Instant page navigation with smart preloading and zero loading flicker
 
 ## 🛠️ Tech Stack
 
@@ -199,6 +200,14 @@ The system uses advanced algorithms to predict potential collisions:
 - Considers vessel size and maneuverability
 - Multi-level alert system (Info, Warning, Danger, Critical)
 
+### Suspicious Activity Detection
+Advanced AI-powered detection of maritime security threats:
+- **Rendezvous Detection**: Identifies suspicious vessel meetings outside port areas
+- **Loitering Detection**: Tracks vessels staying in areas for extended periods
+- **Alert Lifecycle**: NEW → ACKNOWLEDGED → INVESTIGATING → RESOLVED → ESCALATED
+- **Real-time Processing**: Continuous monitoring with immediate notifications
+- **Configurable Thresholds**: Adjustable detection sensitivity and parameters
+
 ### AIS Data Processing
 - Parses standard AIS messages (Types 1, 2, 3, 5, 18, 19)
 - Tracks vessel identity, position, course, and speed
@@ -208,6 +217,13 @@ The system uses advanced algorithms to predict potential collisions:
 - WebSocket-based live updates
 - Automatic reconnection on connection loss
 - Efficient data streaming
+
+### Performance Features
+- **Instant Page Navigation**: Smart preloading eliminates loading delays
+- **Optimized Loading**: Eager loading for frequent pages, lazy loading for others
+- **Zero Flicker**: Smooth transitions with no white flash or double loading states
+- **Smart Notifications**: Limited to 3 toasts with auto-dismiss and duplicate prevention
+- **Type-Safe**: Full TypeScript coverage with strict type checking
 
 ## 🤝 Contributing
 

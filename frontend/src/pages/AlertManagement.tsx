@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useSuspiciousActivities, useAlerts } from '@/stores/websocketStore'
+import { useSuspiciousActivities, useAlerts, useWebSocketStore } from '@/stores/websocketStore'
 import {
   ExclamationTriangleIcon,
   CheckCircleIcon,
@@ -15,6 +15,7 @@ import {
   getAlertStateColor,
   getSeverityColor
 } from '@/types/activity'
+import type { SuspiciousActivity } from '@/types/activity'
 
 type FilterType = 'all' | 'new' | 'acknowledged' | 'investigating' | 'resolved'
 type AlertTab = 'suspicious' | 'collision'
@@ -22,6 +23,7 @@ type AlertTab = 'suspicious' | 'collision'
 const AlertManagement: React.FC = () => {
   const suspiciousActivities = useSuspiciousActivities()
   const collisionAlerts = useAlerts()
+  const updateActivity = useWebSocketStore(state => state.updateActivity)
   const [filter, setFilter] = useState<FilterType>('all')
   const [activeTab, setActiveTab] = useState<AlertTab>('suspicious')
 
@@ -39,25 +41,59 @@ const AlertManagement: React.FC = () => {
     return true
   })
 
-  // Mock action handlers (would connect to backend API)
+  // Action handlers that update the store
   const handleAcknowledge = async (activityId: string) => {
-    console.log('Acknowledging activity:', activityId)
-    // TODO: Call API to acknowledge activity
+    const activity = suspiciousActivities.find(a => a.id === activityId)
+    if (activity) {
+      const updated: SuspiciousActivity = {
+        ...activity,
+        state: AlertState.ACKNOWLEDGED,
+        acknowledgedAt: new Date().toISOString(),
+        acknowledgedBy: 'current-user' // Would come from auth context
+      }
+      updateActivity(updated)
+      console.log('Activity acknowledged:', activityId)
+    }
   }
 
   const handleInvestigate = async (activityId: string) => {
-    console.log('Starting investigation for activity:', activityId)
-    // TODO: Call API to start investigation
+    const activity = suspiciousActivities.find(a => a.id === activityId)
+    if (activity) {
+      const updated: SuspiciousActivity = {
+        ...activity,
+        state: AlertState.INVESTIGATING
+      }
+      updateActivity(updated)
+      console.log('Investigation started:', activityId)
+    }
   }
 
   const handleResolve = async (activityId: string) => {
-    console.log('Resolving activity:', activityId)
-    // TODO: Call API to resolve activity
+    const activity = suspiciousActivities.find(a => a.id === activityId)
+    if (activity) {
+      const updated: SuspiciousActivity = {
+        ...activity,
+        state: AlertState.RESOLVED,
+        resolvedAt: new Date().toISOString(),
+        resolvedBy: 'current-user' // Would come from auth context
+      }
+      updateActivity(updated)
+      console.log('Activity resolved:', activityId)
+    }
   }
 
   const handleEscalate = async (activityId: string) => {
-    console.log('Escalating activity:', activityId)
-    // TODO: Call API to escalate activity
+    const activity = suspiciousActivities.find(a => a.id === activityId)
+    if (activity) {
+      const updated: SuspiciousActivity = {
+        ...activity,
+        state: AlertState.ESCALATED,
+        escalatedAt: new Date().toISOString(),
+        escalatedTo: 'supervisor' // Would be determined by escalation policy
+      }
+      updateActivity(updated)
+      console.log('Activity escalated:', activityId)
+    }
   }
 
 
@@ -110,9 +146,9 @@ const AlertManagement: React.FC = () => {
       <div className="flex gap-2 flex-wrap">
         <button
           onClick={() => setFilter('all')}
-          className={`px-4 py-2 rounded-md text-sm font-medium ${
-            filter === 'all' 
-              ? 'bg-primary text-white' 
+          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+            filter === 'all'
+              ? 'bg-teal-500 text-white shadow-md hover:bg-teal-600'
               : 'bg-white text-secondary-700 border border-secondary-300 hover:bg-secondary-50'
           }`}
         >
@@ -122,9 +158,9 @@ const AlertManagement: React.FC = () => {
           <>
             <button
               onClick={() => setFilter('new')}
-              className={`px-4 py-2 rounded-md text-sm font-medium ${
-                filter === 'new' 
-                  ? 'bg-primary text-white' 
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                filter === 'new'
+                  ? 'bg-teal-500 text-white shadow-md hover:bg-teal-600'
                   : 'bg-white text-secondary-700 border border-secondary-300 hover:bg-secondary-50'
               }`}
             >
@@ -132,9 +168,9 @@ const AlertManagement: React.FC = () => {
             </button>
             <button
               onClick={() => setFilter('acknowledged')}
-              className={`px-4 py-2 rounded-md text-sm font-medium ${
-                filter === 'acknowledged' 
-                  ? 'bg-primary text-white' 
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                filter === 'acknowledged'
+                  ? 'bg-teal-500 text-white shadow-md hover:bg-teal-600'
                   : 'bg-white text-secondary-700 border border-secondary-300 hover:bg-secondary-50'
               }`}
             >
@@ -142,9 +178,9 @@ const AlertManagement: React.FC = () => {
             </button>
             <button
               onClick={() => setFilter('investigating')}
-              className={`px-4 py-2 rounded-md text-sm font-medium ${
-                filter === 'investigating' 
-                  ? 'bg-primary text-white' 
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                filter === 'investigating'
+                  ? 'bg-teal-500 text-white shadow-md hover:bg-teal-600'
                   : 'bg-white text-secondary-700 border border-secondary-300 hover:bg-secondary-50'
               }`}
             >
@@ -152,9 +188,9 @@ const AlertManagement: React.FC = () => {
             </button>
             <button
               onClick={() => setFilter('resolved')}
-              className={`px-4 py-2 rounded-md text-sm font-medium ${
-                filter === 'resolved' 
-                  ? 'bg-primary text-white' 
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                filter === 'resolved'
+                  ? 'bg-teal-500 text-white shadow-md hover:bg-teal-600'
                   : 'bg-white text-secondary-700 border border-secondary-300 hover:bg-secondary-50'
               }`}
             >
@@ -165,9 +201,9 @@ const AlertManagement: React.FC = () => {
           <>
             <button
               onClick={() => setFilter('new')}
-              className={`px-4 py-2 rounded-md text-sm font-medium ${
-                filter === 'new' 
-                  ? 'bg-primary text-white' 
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                filter === 'new'
+                  ? 'bg-teal-500 text-white shadow-md hover:bg-teal-600'
                   : 'bg-white text-secondary-700 border border-secondary-300 hover:bg-secondary-50'
               }`}
             >
@@ -175,9 +211,9 @@ const AlertManagement: React.FC = () => {
             </button>
             <button
               onClick={() => setFilter('resolved')}
-              className={`px-4 py-2 rounded-md text-sm font-medium ${
-                filter === 'resolved' 
-                  ? 'bg-primary text-white' 
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                filter === 'resolved'
+                  ? 'bg-teal-500 text-white shadow-md hover:bg-teal-600'
                   : 'bg-white text-secondary-700 border border-secondary-300 hover:bg-secondary-50'
               }`}
             >

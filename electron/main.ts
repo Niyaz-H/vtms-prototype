@@ -76,7 +76,7 @@ function createWindow(): void {
   // Load the app
   if (isDev) {
     mainWindow.loadURL('http://localhost:3000');
-    mainWindow.webContents.openDevTools();
+    // DevTools can be opened manually with F12 or Ctrl+Shift+I
   } else {
     mainWindow.loadFile(join(RENDERER_DIST, 'index.html'));
   }
@@ -328,11 +328,15 @@ app.whenReady().then(async () => {
   createWindow();
   createTray();
 
-  // Start backend server automatically
-  try {
-    await startBackendServer();
-  } catch (error) {
-    console.error('[Main] Failed to start backend:', error);
+  // Start backend server automatically (skip in dev mode if already running)
+  if (!isDev) {
+    try {
+      await startBackendServer();
+    } catch (error) {
+      console.error('[Main] Failed to start backend:', error);
+    }
+  } else {
+    console.log('[Main] Development mode: Skipping backend start (assume already running)');
   }
 
   app.on('activate', () => {

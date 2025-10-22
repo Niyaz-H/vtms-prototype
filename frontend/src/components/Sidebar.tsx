@@ -6,6 +6,13 @@ interface SidebarProps {
   onClose: () => void
 }
 
+// Route preloading helpers
+const preloadRouteModules: Record<string, () => Promise<any>> = {
+  '/system': () => import('@/pages/SystemMonitor'),
+  '/stats': () => import('@/pages/Statistics'),
+  '/simulation': () => import('@/pages/SimulationControl'),
+}
+
 const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
 
   const navigation = [
@@ -16,6 +23,14 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
     { name: 'Statistics', href: '/stats', icon: ChartBarIcon, current: false },
     { name: 'Simulation', href: '/simulation', icon: CogIcon, current: false },
   ]
+
+  const handleMouseEnter = (href: string) => {
+    // Preload route module on hover for instant navigation
+    const preloader = preloadRouteModules[href]
+    if (preloader) {
+      preloader().catch(() => {})
+    }
+  }
 
   return (
     <>
@@ -51,6 +66,8 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
             <NavLink
               key={item.name}
               to={item.href}
+              onMouseEnter={() => handleMouseEnter(item.href)}
+              onFocus={() => handleMouseEnter(item.href)}
               className={({ isActive }) => `
                 flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200
                 ${isActive

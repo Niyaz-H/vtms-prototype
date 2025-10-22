@@ -3,6 +3,9 @@ import electron from 'vite-plugin-electron';
 import renderer from 'vite-plugin-electron-renderer';
 import react from '@vitejs/plugin-react';
 import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -11,10 +14,10 @@ export default defineConfig({
     electron([
       {
         // Main process entry point
-        entry: 'electron/main.ts',
+        entry: path.resolve(__dirname, 'electron/main.ts'),
         vite: {
           build: {
-            outDir: 'dist-electron',
+            outDir: path.resolve(__dirname, 'dist-electron'),
             rollupOptions: {
               external: ['electron', 'electron-store', 'child_process', 'path', 'url', 'fs'],
             },
@@ -23,14 +26,14 @@ export default defineConfig({
       },
       {
         // Preload script
-        entry: 'electron/preload.ts',
+        entry: path.resolve(__dirname, 'electron/preload.ts'),
         onstart(options) {
           // Notify the renderer process to reload the page when the preload scripts are rebuilt
           options.reload();
         },
         vite: {
           build: {
-            outDir: 'dist-electron',
+            outDir: path.resolve(__dirname, 'dist-electron'),
           },
         },
       },
@@ -39,12 +42,14 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './frontend/src'),
+      '@': path.resolve(__dirname, 'frontend/src'),
     },
   },
+  root: path.resolve(__dirname, 'frontend'),
+  publicDir: path.resolve(__dirname, 'frontend/public'),
   base: './',
   build: {
-    outDir: 'frontend/dist',
+    outDir: path.resolve(__dirname, './frontend/dist'),
     emptyOutDir: true,
   },
   server: {

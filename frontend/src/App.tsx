@@ -4,23 +4,43 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import Layout from '@/components/Layout'
 import { LoadingSkeleton } from '@/components/LoadingSkeleton'
 
-// Lazy load pages for better code splitting
-const Dashboard = lazy(() => import('@/pages/Dashboard'))
-const MapView = lazy(() => import('@/pages/MapView'))
+import { webSocketService } from '@/services/websocket'
+import { useAuthStore } from '@/stores/authStore'
+import { useWebSocketStore } from '@/stores/websocketStore'
+
+// Eager load frequently accessed pages
+import Dashboard from '@/pages/Dashboard'
+import MapView from '@/pages/MapView'
+import AlertManagement from '@/pages/AlertManagement'
+
+// Lazy load less frequently accessed pages
 const VesselDetail = lazy(() => import('@/pages/VesselDetail'))
-const AlertManagement = lazy(() => import('@/pages/AlertManagement'))
 const SystemMonitor = lazy(() => import('@/pages/SystemMonitor'))
 const SimulationControl = lazy(() => import('@/pages/SimulationControl'))
 const Statistics = lazy(() => import('@/pages/Statistics'))
 const NotFound = lazy(() => import('@/pages/NotFound'))
 
-import { webSocketService } from '@/services/websocket'
-import { useAuthStore } from '@/stores/authStore'
-import { useWebSocketStore } from '@/stores/websocketStore'
+// Preload lazy modules on hover/focus
+const preloadModule = (importFn: () => Promise<any>) => {
+  importFn().catch(() => {})
+}
 
 function App() {
   const { isAuthenticated, user } = useAuthStore()
   const { initializeWebSocket } = useWebSocketStore()
+
+  // Preload lazy modules on mount for instant navigation
+  useEffect(() => {
+    // Preload less frequently used pages in the background
+    const preloadTimer = setTimeout(() => {
+      preloadModule(() => import('@/pages/VesselDetail'))
+      preloadModule(() => import('@/pages/SystemMonitor'))
+      preloadModule(() => import('@/pages/SimulationControl'))
+      preloadModule(() => import('@/pages/Statistics'))
+    }, 2000)
+
+    return () => clearTimeout(preloadTimer)
+  }, [])
 
   // Initialize WebSocket connection
   useEffect(() => {
@@ -85,76 +105,69 @@ function App() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Suspense fallback={<LoadingSkeleton />}>
-        <Routes>
-          {/* Default route - redirect to dashboard */}
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          
-          {/* Main routes with Suspense boundaries */}
-          <Route path="/dashboard" element={
-            <Layout>
-              <Suspense fallback={<LoadingSkeleton />}>
-                <Dashboard />
-              </Suspense>
-            </Layout>
-          } />
-          
-          <Route path="/map" element={
-            <Layout>
-              <Suspense fallback={<LoadingSkeleton />}>
-                <MapView />
-              </Suspense>
-            </Layout>
-          } />
-          
-          <Route path="/vessels/:mmsi" element={
-            <Layout>
-              <Suspense fallback={<LoadingSkeleton />}>
-                <VesselDetail />
-              </Suspense>
-            </Layout>
-          } />
-          
-          <Route path="/alerts" element={
-            <Layout>
-              <Suspense fallback={<LoadingSkeleton />}>
-                <AlertManagement />
-              </Suspense>
-            </Layout>
-          } />
-          
-          <Route path="/system" element={
-            <Layout>
-              <Suspense fallback={<LoadingSkeleton />}>
-                <SystemMonitor />
-              </Suspense>
-            </Layout>
-          } />
-          
-          <Route path="/stats" element={
-            <Layout>
-              <Suspense fallback={<LoadingSkeleton />}>
-                <Statistics />
-              </Suspense>
-            </Layout>
-          } />
-          
-          <Route path="/simulation" element={
-            <Layout>
-              <Suspense fallback={<LoadingSkeleton />}>
-                <SimulationControl />
-              </Suspense>
-            </Layout>
-          } />
-          
-          {/* 404 route */}
-          <Route path="*" element={
-            <Suspense fallback={<LoadingSkeleton />}>
-              <NotFound />
+      <Routes>
+        {/* Default route - redirect to dashboard */}
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        
+        {/* Main routes - NO double Suspense boundaries */}
+        <Route path="/dashboard" element={
+          <Layout>
+            <Dashboard />
+          </Layout>
+        } />
+        
+        <Route path="/map" element={
+          <Layout>
+            <MapView />
+          </Layout>
+        } />
+        
+        <Route path="/alerts" element={
+          <Layout>
+            <AlertManagement />
+          </Layout>
+        } />
+        
+        {/* Lazy-loaded routes with single Suspense */}
+        <Route path="/vessels/:mmsi" element={
+          <Layout>
+            <Suspense fallback={<div className="flex items-center justify-center h-64"><LoadingSkeleton className="w-full h-full" /></div>}>
+              <VesselDetail />
             </Suspense>
-          } />
-        </Routes>
-      </Suspense>
+          </Layout>
+        } />
+        
+        <Route path="/system" element={
+          <Layout>
+            <Suspense fallback={<div className="flex items-center justify-center h-64"><LoadingSkeleton className="w-full h-full" /></div>}>
+              <SystemMonitor />
+            </Suspense>
+          </Layout>
+        } />
+        
+        <Route path="/stats" element={
+          <Layout>
+            <Suspense fallback={<div className="flex items-center justify-center h-64"><LoadingSkeleton className="w-full h-full" /></div>}>
+              <Statistics />
+            </Suspense>
+          </Layout>
+        } />
+        
+        <Route path="/simulation" element={
+          <Layout>
+            <Suspense fallback={<div className="flex items-center justify-center h-64"><LoadingSkeleton className="w-full h-full" /></div>}>
+              <SimulationControl />
+            </Suspense>
+          </Layout>
+        } />
+        
+        {/* 404 route */}
+        <Route path="*" element={
+          <Suspense fallback={<div className="flex items-center justify-center h-64"><LoadingSkeleton className="w-full h-full" /></div>}>
+            <NotFound />
+          </Suspense>
+        } />
+      </Routes>
     </div>
   )
 }

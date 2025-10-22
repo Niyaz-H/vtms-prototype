@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { usePendingActivities } from '@/stores/websocketStore'
 import { getActivityTypeLabel, getActivityTypeIcon, getSeverityColor } from '@/types/activity'
 import { XMarkIcon } from '@heroicons/react/24/outline'
@@ -12,16 +12,21 @@ interface Toast {
   timestamp: Date
 }
 
+const MAX_TOASTS = 3 // Maximum number of toasts to show at once
+
 const NotificationToast: React.FC = () => {
   const pendingActivities = usePendingActivities()
   const [toasts, setToasts] = useState<Toast[]>([])
-  const [prevActivityCount, setPrevActivityCount] = useState(0)
+  const seenActivityIds = useRef(new Set<string>())
 
   useEffect(() => {
-    // Detect new activities
-    if (pendingActivities.length > prevActivityCount) {
-      const newActivities = pendingActivities.slice(prevActivityCount)
-      const newToasts = newActivities.map(activity => ({
+    // Only show toasts for activities we haven't seen before
+    const newActivities = pendingActivities.filter(
+      activity => !seenActivityIds.current.has(activity.id)
+    )
+
+    if (newActivities.length > 0) {
+      const newToasts = newActivities.slice(0, MAX_TOASTS).map(activity => ({
         id: activity.id,
         message: `${getActivityTypeLabel(activity.type)} detected involving vessels: ${activity.vessels.join(', ')}`,
         type: getActivityTypeLabel(activity.type),
@@ -30,18 +35,20 @@ const NotificationToast: React.FC = () => {
         timestamp: new Date()
       }))
       
-      setToasts(prev => [...prev, ...newToasts])
+      // Mark these activities as seen
+      newActivities.forEach(activity => seenActivityIds.current.add(activity.id))
       
-      // Auto-remove toasts after 10 seconds
+      // Add new toasts, but limit total count
+      setToasts(prev => [...prev, ...newToasts].slice(-MAX_TOASTS))
+      
+      // Auto-remove toasts after 8 seconds
       newToasts.forEach(toast => {
         setTimeout(() => {
           setToasts(prev => prev.filter(t => t.id !== toast.id))
-        }, 10000)
+        }, 8000)
       })
     }
-    
-    setPrevActivityCount(pendingActivities.length)
-  }, [pendingActivities, prevActivityCount])
+  }, [pendingActivities])
 
   const dismissToast = (id: string) => {
     setToasts(prev => prev.filter(t => t.id !== id))
@@ -50,7 +57,7 @@ const NotificationToast: React.FC = () => {
   if (toasts.length === 0) return null
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 space-y-3 max-w-md">
+    <div className="fixed top-20 right-4 z-50 space-y-3 max-w-sm">
       {toasts.map((toast) => (
         <div
           key={toast.id}
