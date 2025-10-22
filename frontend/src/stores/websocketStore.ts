@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { subscribeWithSelector } from 'zustand/middleware'
 import type { CollisionAlert } from '@/types/alert'
 import type { Vessel } from '@/types/vessel'
+import type { SuspiciousActivity, ActivityStats } from '@/types/activity'
 
 interface SystemStats {
   vessels: any
@@ -16,6 +17,8 @@ interface VesselState {
   connected: boolean
   vessels: Vessel[]
   alerts: CollisionAlert[]
+  suspiciousActivities: SuspiciousActivity[]
+  activityStats: ActivityStats | null
   systemStats: SystemStats | null
   lastUpdate: number
 }
@@ -24,6 +27,8 @@ interface VesselActions {
   initializeWebSocket: (socket: any) => void
   updateVessels: (vessels: Vessel[]) => void
   updateAlerts: (alerts: CollisionAlert[]) => void
+  updateSuspiciousActivities: (activities: SuspiciousActivity[]) => void
+  updateActivityStats: (stats: ActivityStats) => void
   updateSystemStats: (systemStats: SystemStats) => void
   addVessel: (vessel: Vessel) => void
   updateVessel: (vessel: Vessel) => void
@@ -31,6 +36,8 @@ interface VesselActions {
   addAlert: (alert: CollisionAlert) => void
   updateAlert: (alert: CollisionAlert) => void
   removeAlert: (alertId: string) => void
+  addActivity: (activity: SuspiciousActivity) => void
+  updateActivity: (activity: SuspiciousActivity) => void
   batchUpdateVessels: (vessels: Vessel[]) => void
 }
 
@@ -40,6 +47,8 @@ export const useWebSocketStore = create<VesselState & VesselActions>()(
     connected: false,
     vessels: [],
     alerts: [],
+    suspiciousActivities: [],
+    activityStats: null,
     systemStats: null,
     lastUpdate: Date.now(),
     
@@ -120,6 +129,16 @@ export const useWebSocketStore = create<VesselState & VesselActions>()(
           set({ systemStats: stats.data, lastUpdate: Date.now() })
         })
         
+        socket.on('suspicious_activities', (data: any) => {
+          console.log('[WebSocketStore] Received suspicious activities:', data)
+          set({ suspiciousActivities: data.data, lastUpdate: Date.now() })
+        })
+        
+        socket.on('activity_stats', (data: any) => {
+          console.log('[WebSocketStore] Received activity stats:', data)
+          set({ activityStats: data.data, lastUpdate: Date.now() })
+        })
+        
         socket.on('connect', () => {
           console.log('[WebSocketStore] Socket connected')
           set({ connected: true })
@@ -134,6 +153,10 @@ export const useWebSocketStore = create<VesselState & VesselActions>()(
     
     updateVessels: (vessels: Vessel[]) => set({ vessels, lastUpdate: Date.now() }),
     updateAlerts: (alerts: CollisionAlert[]) => set({ alerts, lastUpdate: Date.now() }),
+    updateSuspiciousActivities: (suspiciousActivities: SuspiciousActivity[]) =>
+      set({ suspiciousActivities, lastUpdate: Date.now() }),
+    updateActivityStats: (activityStats: ActivityStats) =>
+      set({ activityStats, lastUpdate: Date.now() }),
     updateSystemStats: (systemStats: SystemStats) => set({ systemStats, lastUpdate: Date.now() }),
     
     addVessel: (vessel: Vessel) => set((state) => ({ 
@@ -166,6 +189,17 @@ export const useWebSocketStore = create<VesselState & VesselActions>()(
       lastUpdate: Date.now()
     })),
     
+    addActivity: (activity: SuspiciousActivity) => set((state) => ({
+      suspiciousActivities: [...state.suspiciousActivities, activity],
+      lastUpdate: Date.now()
+    })),
+    updateActivity: (activity: SuspiciousActivity) => set((state) => ({
+      suspiciousActivities: state.suspiciousActivities.map((a: SuspiciousActivity) =>
+        a.id === activity.id ? activity : a
+      ),
+      lastUpdate: Date.now()
+    })),
+    
     // Batch update multiple vessels at once
     batchUpdateVessels: (vessels: Vessel[]) => set((state) => {
       const vesselMap = new Map(state.vessels.map(v => [v.mmsi, v]))
@@ -181,9 +215,16 @@ export const useWebSocketStore = create<VesselState & VesselActions>()(
 // Selective hooks for better performance
 export const useVessels = () => useWebSocketStore(state => state.vessels)
 export const useAlerts = () => useWebSocketStore(state => state.alerts)
-export const useActiveAlerts = () => useWebSocketStore(state => 
+export const useActiveAlerts = () => useWebSocketStore(state =>
   state.alerts.filter(alert => !alert.resolved)
 )
+export const useSuspiciousActivities = () => useWebSocketStore(state => state.suspiciousActivities)
+export const usePendingActivities = () => useWebSocketStore(state =>
+  state.suspiciousActivities.filter(activity =>
+    activity.state === 'new' || activity.state === 'acknowledged'
+  )
+)
+export const useActivityStats = () => useWebSocketStore(state => state.activityStats)
 export const useVesselCount = () => useWebSocketStore(state => state.vessels.length)
 export const useConnected = () => useWebSocketStore(state => state.connected)
 export const useSystemStats = () => useWebSocketStore(state => state.systemStats)

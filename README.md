@@ -7,7 +7,10 @@ A modern, real-time vessel traffic management system built with React, TypeScrip
 - **Real-time Vessel Tracking**: Monitor vessel positions and movements in real-time
 - **Interactive Map View**: Leaflet-based map with vessel markers and route visualization
 - **Collision Detection**: Advanced algorithm for detecting potential vessel collisions
-- **Alert Management**: Comprehensive alert system with multiple severity levels
+- **Suspicious Activity Detection**: AI-powered detection of rendezvous meetings and loitering behavior
+- **Alert Lifecycle Management**: Full workflow from detection to resolution (NEW → ACKNOWLEDGED → INVESTIGATING → RESOLVED)
+- **Alert Management**: Comprehensive alert system with multiple severity levels and action buttons
+- **Real-time Notifications**: Toast notifications for immediate awareness of suspicious activities
 - **System Monitoring**: Real-time system health and performance metrics
 - **Simulation Mode**: Test and demonstrate system capabilities with simulated vessels
 - **Responsive Design**: Works seamlessly on desktop and mobile devices
@@ -101,9 +104,14 @@ vtms-prototype/
 │   │   │   ├── aisParser.ts
 │   │   │   ├── aisSimulation.ts
 │   │   │   ├── collisionDetection.ts
+│   │   │   ├── activityDetection.ts      # NEW: Activity orchestrator
+│   │   │   ├── alertManager.ts           # NEW: Alert lifecycle
+│   │   │   ├── rendezvousDetector.ts     # NEW: Meeting detection
+│   │   │   ├── loiteringDetector.ts      # NEW: Loitering detection
 │   │   │   ├── vesselStore.ts
 │   │   │   └── websocket.ts
 │   │   └── types/          # TypeScript types
+│   │       └── activity.ts                # NEW: Activity types
 │   └── package.json
 ├── frontend/
 │   ├── src/

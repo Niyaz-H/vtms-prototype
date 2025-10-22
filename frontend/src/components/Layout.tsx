@@ -3,6 +3,7 @@ import { MapIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 
 import Sidebar from './Sidebar'
 import Header from './Header'
+import NotificationToast from './NotificationToast'
 import { useWebSocketStore } from '@/stores/websocketStore'
 
 interface LayoutProps {
@@ -27,6 +28,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   return (
     <div className="flex h-screen bg-background">
+      {/* Notification Toast */}
+      <NotificationToast />
+      
       {/* Sidebar */}
       <Sidebar
         open={sidebarOpen}

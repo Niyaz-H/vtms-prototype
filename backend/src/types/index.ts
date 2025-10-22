@@ -6,3 +6,4 @@
 export * from './ais';
 export * from './collision';
 export * from './api';
+export * from './activity';

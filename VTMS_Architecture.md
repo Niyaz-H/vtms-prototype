@@ -14,9 +14,12 @@ The VTMS prototype is a full-stack application that:
 - Processes AIS (Automatic Identification System) messages in real-time
 - Tracks vessel positions, courses, and speeds
 - Implements collision detection algorithms with configurable safety zones
+- **NEW**: Detects suspicious activities (rendezvous meetings, loitering behavior)
+- **NEW**: Full alert lifecycle management (NEW → ACKNOWLEDGED → INVESTIGATING → RESOLVED)
 - Provides real-time WebSocket updates to connected clients
 - Offers an interactive web dashboard with map visualization
-- **NEW**: Packaged as a cross-platform desktop application (Windows, macOS, Linux)
+- **NEW**: Real-time notification system for immediate alerts
+- Packaged as a cross-platform desktop application (Windows, macOS, Linux)
 
 ## Technology Stack
 
@@ -70,15 +73,28 @@ The VTMS prototype is a full-stack application that:
 └─────────────────┘    └──────────────────┘    └─────────────────┘
                                                         │
 ┌─────────────────┐    ┌──────────────────┐            │
-│   Web Dashboard │◀───│   WebSocket      │◀───────────┘
-│   (React)       │    │   Service        │
-└─────────────────┘    └──────────────────┘
-                                │
-                       ┌──────────────────┐
-                       │   Collision      │
+│   Web Dashboard │◀───│   WebSocket      │◀───────────┤
+│   (React)       │    │   Service        │            │
+│   + Toasts      │    │                  │            │
+└─────────────────┘    └──────────────────┘            │
+                                │                       │
+                       ┌──────────────────┐            │
+                       │   Collision      │◀───────────┤
+                       │   Detection      │            │
+                       └──────────────────┘            │
+                                                        │
+                       ┌──────────────────┐            │
+                       │   Activity       │◀───────────┘
                        │   Detection      │
-                       │   Engine         │
-                       └──────────────────┘
+                       │   Orchestrator   │
+                       └────────┬─────────┘
+                                │
+                    ┌───────────┼───────────┐
+                    │           │           │
+          ┌─────────▼────┐ ┌───▼────────┐ ┌▼─────────────┐
+          │  Rendezvous  │ │ Loitering  │ │    Alert     │
+          │   Detector   │ │  Detector  │ │   Manager    │
+          └──────────────┘ └────────────┘ └──────────────┘
                                 │
                        ┌──────────────────┐
                        │   REST API       │
@@ -110,6 +126,22 @@ The VTMS prototype is a full-stack application that:
 - Configurable safety zones (CPA - Closest Point of Approach)
 - TCPA (Time to Closest Point of Approach) calculations
 - Multi-level alert system (warning, danger, critical)
+
+### 3.5. Activity Detection System (NEW)
+- **Rendezvous Detector**: Identifies suspicious vessel meetings
+  - Detects vessels approaching (<0.5 NM)
+  - Monitors speed reduction (<3 knots)
+  - Tracks meeting duration (>5 minutes)
+  - Excludes port areas
+- **Loitering Detector**: Identifies vessels staying in confined areas
+  - Monitors position stability (<0.2 NM radius)
+  - Tracks extended durations (>2 hours)
+  - Excludes anchorage zones
+- **Alert Manager**: Full lifecycle management
+  - States: NEW → ACKNOWLEDGED → INVESTIGATING → RESOLVED
+  - Action tracking and history
+  - User assignment and notes
+- **Activity Orchestrator**: Coordinates all detection services (30s interval)
 
 ### 4. Real-time Communication
 - WebSocket connections for live vessel updates

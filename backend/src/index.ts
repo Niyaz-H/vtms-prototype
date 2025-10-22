@@ -16,6 +16,7 @@ import config from './config';
 import { aisSimulationService } from './services/aisSimulation';
 import { vesselStore } from './services/vesselStore';
 import { collisionDetection } from './services/collisionDetection';
+import { activityDetection } from './services/activityDetection';
 import { setupRoutes } from './routes';
 import { errorHandler } from './middleware/errorHandler';
 import { setupSocketHandlers } from './services/websocket';
@@ -25,6 +26,7 @@ class VTMServer {
   private server: any;
   private io: SocketIOServer;
   private collisionDetectionInterval: NodeJS.Timeout | null = null;
+  private activityDetectionInterval: NodeJS.Timeout | null = null;
 
   constructor() {
     this.app = express();
@@ -135,6 +137,9 @@ class VTMServer {
       // Start collision detection
       this.startCollisionDetection();
 
+      // Start activity detection
+      this.startActivityDetection();
+
       // Start the server
       this.server.listen(config.server.port, config.server.host, () => {
         console.log(`VTMS Server running on http://${config.server.host}:${config.server.port}`);
@@ -189,12 +194,50 @@ class VTMServer {
     console.log(`Collision detection started (interval: ${config.collisionDetection.updateInterval}s)`);
   }
 
+  private startActivityDetection(): void {
+    const intervalMs = 30 * 1000; // Run every 30 seconds
+    
+    this.activityDetectionInterval = setInterval(async () => {
+      try {
+        const result = await activityDetection.runDetection();
+        
+        // Broadcast suspicious activities to WebSocket clients
+        const pendingActivities = activityDetection.getPendingActivities();
+        if (pendingActivities.length > 0) {
+          this.io.emit('suspicious_activities', {
+            type: 'suspicious_activities',
+            data: pendingActivities,
+            timestamp: new Date()
+          });
+        }
+
+        // Broadcast activity detection stats
+        const stats = activityDetection.getStatistics();
+        this.io.emit('activity_stats', {
+          type: 'activity_stats',
+          data: stats,
+          timestamp: new Date()
+        });
+
+      } catch (error) {
+        console.error('Activity detection error:', error);
+      }
+    }, intervalMs);
+
+    console.log(`Activity detection started (interval: 30s)`);
+  }
+
   public async stop(): Promise<void> {
     console.log('Shutting down VTMS Server...');
 
     // Stop collision detection
     if (this.collisionDetectionInterval) {
       clearInterval(this.collisionDetectionInterval);
+    }
+
+    // Stop activity detection
+    if (this.activityDetectionInterval) {
+      clearInterval(this.activityDetectionInterval);
     }
 
     // Stop AIS simulation
