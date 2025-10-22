@@ -21,24 +21,44 @@ The VTMS prototype is a full-stack application that:
 ## Technology Stack
 
 ### Backend
-- **Runtime**: Node.js 18+ with TypeScript
-- **Framework**: Express.js for REST API
-- **Real-time Communication**: Socket.IO for WebSocket connections
+- **Runtime**: Bun 1.2+ / Node.js 20+ with TypeScript 5.9
+- **Framework**: Express.js 5.1 for REST API
+- **Real-time Communication**: Socket.IO 4.8 for WebSocket connections
 - **Database**: PostgreSQL with PostGIS extension for geospatial data
-- **Caching**: Redis for real-time vessel state management
+- **Caching**: Redis 5.8 with ioredis 5.8 for real-time vessel state management
 - **Message Queue**: In-memory queue for AIS message processing
+- **Monitoring**: Morgan 1.10 for HTTP logging, Helmet 8.1 for security
 
 ### Frontend
-- **Framework**: React 18 with TypeScript
-- **State Management**: Zustand for lightweight state management
-- **Maps**: Leaflet with React-Leaflet for interactive mapping
-- **UI Components**: Tailwind CSS for styling
-- **Real-time Updates**: Socket.IO client
+- **Framework**: React 19.2 with TypeScript 5.9
+- **Build Tool**: Vite 5.4 for fast development and HMR
+- **State Management**: Zustand 4.5 for lightweight state management
+- **Data Fetching**: TanStack Query v5 (modern React Query)
+- **Maps**: Leaflet 1.9 with React-Leaflet 4.2 for interactive mapping
+- **UI Framework**: TailwindCSS v4.1 for utility-first styling
+- **UI Components**: Radix UI for accessible primitives
+- **Animations**: Framer Motion 10.18
+- **Charts**: Recharts 2.15 for data visualization
+- **Routing**: React Router 6.30 for navigation
+- **Real-time Updates**: Socket.IO client 4.8
+
+### Desktop Application (Electron)
+- **Platform**: Electron 33.2 with TypeScript 5.9
+- **Main Process**: Window management, IPC handlers, system tray
+- **Preload Script**: Secure context bridge with context isolation
+- **Native Features**: File dialogs, notifications, persistent storage (electron-store 10.0)
+- **Packaging**: electron-builder 25.1 for multi-platform distribution
+- **Security**: Sandbox mode, CSP headers, validated IPC channels
+- **Auto-Updates**: electron-updater 6.3 for seamless updates
 
 ### Development & Deployment
-- **Package Manager**: Bun (as specified)
-- **Containerization**: Docker with docker-compose
-- **Testing**: Jest for unit tests, Supertest for API tests
+- **Package Manager**: Bun 1.2 (primary), npm/yarn compatible
+- **Build System**: Vite 5.4 with vite-plugin-electron 0.28 for hot reload
+- **Containerization**: Docker with docker-compose (web mode)
+- **Desktop Packaging**: electron-builder (NSIS, DMG, AppImage, DEB)
+- **Testing**: Jest 30.2 for unit tests, Supertest 7.1 for API tests, Playwright for E2E
+- **Type Checking**: TypeScript 5.9 strict mode
+- **Linting**: ESLint 8.57 with TypeScript support
 - **Documentation**: OpenAPI/Swagger for API documentation
 
 ## System Architecture

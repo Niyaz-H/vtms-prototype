@@ -16,22 +16,31 @@ A modern, real-time vessel traffic management system built with React, TypeScrip
 ## 🛠️ Tech Stack
 
 ### Frontend
-- **React 18** with TypeScript
-- **Vite** for fast development and building
-- **TailwindCSS v4** for styling
-- **React Router** for navigation
-- **Leaflet** for map visualization
-- **Recharts** for data visualization
-- **Zustand** for state management
-- **TanStack Query** for data fetching
+- **React 19.2** with TypeScript 5.9
+- **Vite 5.4** for fast development and building
+- **TailwindCSS v4.1** for styling
+- **React Router 6.30** for navigation
+- **Leaflet 1.9** for map visualization
+- **Recharts 2.15** for data visualization
+- **Zustand 4.5** for state management
+- **TanStack Query v5** for data fetching (modern React Query)
+- **Framer Motion 10.18** for animations
+- **Radix UI** for accessible components
 
 ### Backend
-- **Bun** runtime
-- **Express.js** framework
-- **Socket.IO** for WebSocket communication
-- **TypeScript** for type safety
-- **Redis** (optional) for caching
+- **Bun 1.2** runtime
+- **Express.js 5.1** framework
+- **Socket.IO 4.8** for WebSocket communication
+- **TypeScript 5.9** for type safety
+- **Redis 5.8** (optional) for caching
+- **ioredis 5.8** for Redis client
 - **AIS message parsing** for vessel data
+
+### Desktop Application
+- **Electron 33.2** for cross-platform desktop apps
+- **electron-builder 25.1** for packaging
+- **electron-store 10.0** for persistent settings
+- **Native features**: System tray, notifications, file dialogs
 
 ## 📋 Prerequisites
 
