@@ -1,13 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import {
-  HomeIcon,
-  MapIcon,
-  ExclamationTriangleIcon,
-  CogIcon,
-  ChartBarIcon,
-  XMarkIcon,
-  ComputerDesktopIcon
-} from '@heroicons/react/24/outline'
+import { HomeIcon, MapIcon, ExclamationTriangleIcon, CogIcon, ChartBarIcon, XMarkIcon, ComputerDesktopIcon } from '@heroicons/react/24/outline'
 
 interface SidebarProps {
   open: boolean

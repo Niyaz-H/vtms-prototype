@@ -1,8 +1,5 @@
 import { useEffect, useState } from 'react'
-import {
-  MapIcon,
-  ExclamationTriangleIcon
-} from '@heroicons/react/24/outline'
+import { MapIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 
 import Sidebar from './Sidebar'
 import Header from './Header'

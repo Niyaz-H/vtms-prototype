@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useMemo, memo } from 'react'
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -34,14 +34,16 @@ const createVesselIcon = (course: number = 0, alertLevel?: string) => {
   })
 }
 
-// Component to update map view
-const MapUpdater: React.FC<{ center: [number, number]; zoom: number }> = ({ center, zoom }) => {
+// Component to update map view - memoized
+const MapUpdater = memo<{ center: [number, number]; zoom: number }>(({ center, zoom }) => {
   const map = useMap()
   useEffect(() => {
     map.setView(center, zoom)
   }, [center, zoom, map])
   return null
-}
+})
+
+MapUpdater.displayName = 'MapUpdater'
 
 interface VesselMapProps {
   className?: string
@@ -49,27 +51,40 @@ interface VesselMapProps {
   selectedVesselId?: number
 }
 
-const VesselMap: React.FC<VesselMapProps> = ({ 
-  className = '', 
+const VesselMap = memo<VesselMapProps>(({
+  className = '',
   onVesselClick,
-  selectedVesselId 
+  selectedVesselId
 }) => {
   const { vessels, alerts } = useWebSocketStore()
   const [center, setCenter] = useState<[number, number]>([40.7128, -74.0060]) // New York default
   const [zoom, setZoom] = useState(10)
   const mapRef = useRef<L.Map>(null)
 
-  // Get alert level for a vessel
-  const getVesselAlertLevel = (mmsi: number): string | undefined => {
-    const vesselAlerts = alerts.filter(alert => 
-      !alert.resolved && (alert.vessels[0] === mmsi.toString() || alert.vessels[1] === mmsi.toString())
-    )
+  // Memoize alert level lookup - prevents recalculation on every render
+  const vesselAlertLevels = useMemo(() => {
+    const alertMap = new Map<number, string>()
     
-    if (vesselAlerts.some(a => a.level === 'critical')) return 'critical'
-    if (vesselAlerts.some(a => a.level === 'danger')) return 'danger'
-    if (vesselAlerts.some(a => a.level === 'warning')) return 'warning'
-    return undefined
-  }
+    alerts
+      .filter(alert => !alert.resolved)
+      .forEach(alert => {
+        alert.vessels.forEach(vesselMmsi => {
+          const mmsi = parseInt(vesselMmsi)
+          const currentLevel = alertMap.get(mmsi)
+          const newLevel = alert.level
+          
+          // Update only if new alert is more severe
+          if (!currentLevel ||
+              (newLevel === 'critical') ||
+              (newLevel === 'danger' && currentLevel !== 'critical') ||
+              (newLevel === 'warning' && !['critical', 'danger'].includes(currentLevel))) {
+            alertMap.set(mmsi, newLevel)
+          }
+        })
+      })
+    
+    return alertMap
+  }, [alerts])
 
   // Update center when vessels are loaded
   useEffect(() => {
@@ -91,8 +106,8 @@ const VesselMap: React.FC<VesselMapProps> = ({
     }
   }, [selectedVesselId, vessels])
 
-  // Draw collision alert lines
-  const renderAlertLines = () => {
+  // Memoize alert lines rendering
+  const alertLines = useMemo(() => {
     return alerts
       .filter(alert => !alert.resolved)
       .map(alert => {
@@ -113,16 +128,53 @@ const VesselMap: React.FC<VesselMapProps> = ({
               [vessel1.position.latitude, vessel1.position.longitude],
               [vessel2.position.latitude, vessel2.position.longitude]
             ]}
-            pathOptions={{ 
-              color, 
-              weight: 2, 
+            pathOptions={{
+              color,
+              weight: 2,
               opacity: 0.6,
               dashArray: '5, 10'
             }}
           />
         )
       })
-  }
+  }, [alerts, vessels])
+
+  // Memoize vessel markers rendering
+  const vesselMarkers = useMemo(() => {
+    return vessels.map((vessel) => {
+      const alertLevel = vesselAlertLevels.get(vessel.mmsi)
+      
+      return (
+        <Marker
+          key={vessel.mmsi}
+          position={[vessel.position.latitude, vessel.position.longitude]}
+          icon={createVesselIcon(vessel.course || 0, alertLevel)}
+          eventHandlers={{
+            click: () => onVesselClick?.(vessel)
+          }}
+        >
+          <Popup>
+            <div className="p-2">
+              <h3 className="font-semibold text-lg mb-2">
+                {vessel.name || `Vessel ${vessel.mmsi}`}
+              </h3>
+              <div className="space-y-1 text-sm">
+                <p><strong>MMSI:</strong> {vessel.mmsi}</p>
+                <p><strong>Speed:</strong> {vessel.speed?.toFixed(1) || 0} knots</p>
+                <p><strong>Course:</strong> {vessel.course?.toFixed(0) || 0}°</p>
+                <p><strong>Heading:</strong> {vessel.heading?.toFixed(0) || 0}°</p>
+                {alertLevel && (
+                  <p className="mt-2 text-danger font-semibold">
+                    ⚠️ {alertLevel.toUpperCase()} ALERT
+                  </p>
+                )}
+              </div>
+            </div>
+          </Popup>
+        </Marker>
+      )
+    })
+  }, [vessels, vesselAlertLevels, onVesselClick])
 
   return (
     <div className={`relative ${className}`}>
@@ -140,42 +192,10 @@ const VesselMap: React.FC<VesselMapProps> = ({
         />
 
         {/* Render alert lines */}
-        {renderAlertLines()}
+        {alertLines}
 
         {/* Render vessel markers */}
-        {vessels.map((vessel) => {
-          const alertLevel = getVesselAlertLevel(vessel.mmsi)
-          
-          return (
-            <Marker
-              key={vessel.mmsi}
-              position={[vessel.position.latitude, vessel.position.longitude]}
-              icon={createVesselIcon(vessel.course || 0, alertLevel)}
-              eventHandlers={{
-                click: () => onVesselClick?.(vessel)
-              }}
-            >
-              <Popup>
-                <div className="p-2">
-                  <h3 className="font-semibold text-lg mb-2">
-                    {vessel.name || `Vessel ${vessel.mmsi}`}
-                  </h3>
-                  <div className="space-y-1 text-sm">
-                    <p><strong>MMSI:</strong> {vessel.mmsi}</p>
-                    <p><strong>Speed:</strong> {vessel.speed?.toFixed(1) || 0} knots</p>
-                    <p><strong>Course:</strong> {vessel.course?.toFixed(0) || 0}°</p>
-                    <p><strong>Heading:</strong> {vessel.heading?.toFixed(0) || 0}°</p>
-                    {alertLevel && (
-                      <p className="mt-2 text-danger font-semibold">
-                        ⚠️ {alertLevel.toUpperCase()} ALERT
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </Popup>
-            </Marker>
-          )
-        })}
+        {vesselMarkers}
       </MapContainer>
 
       {/* Map Controls */}
@@ -225,6 +245,8 @@ const VesselMap: React.FC<VesselMapProps> = ({
       </div>
     </div>
   )
-}
+})
+
+VesselMap.displayName = 'VesselMap'
 
 export default VesselMap

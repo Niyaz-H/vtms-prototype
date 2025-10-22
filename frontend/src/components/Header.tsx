@@ -1,10 +1,5 @@
 import { useState } from 'react'
-import {
-  Bars3Icon,
-  BellIcon,
-  Cog6ToothIcon,
-  XMarkIcon
-} from '@heroicons/react/24/outline'
+import { Bars3Icon, BellIcon, Cog6ToothIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { useWebSocketStore } from '@/stores/websocketStore'
 import toast from 'react-hot-toast'
 
