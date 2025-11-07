@@ -8,7 +8,7 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "dev": "bun run dev:backend & bun run dev:electron",
+    "dev": "concurrently -n \"BACKEND,ELECTRON\" -c \"bgBlue.bold,bgMagenta.bold\" \"bun run dev:backend\" \"bun run dev:electron\"",
     "dev:backend": "cd backend && bun run dev",
     "dev:electron": "vite",
     "build": "bun run build:backend && bun run build:frontend && bun run build:electron",
@@ -32,6 +32,7 @@
   },
   "devDependencies": {
     "@types/node": "^24.9.1",
+    "concurrently": "^9.2.1",
     "electron": "^33.4.11",
     "electron-builder": "^25.1.8",
     "typescript": "^5.9.3",

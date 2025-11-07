@@ -92,6 +92,49 @@ The frontend will start on `http://localhost:3000`
 
 3. Open your browser and navigate to `http://localhost:3000`
 
+### Running as Desktop Application (Electron)
+
+For the best development experience with the desktop app:
+
+1. Start the backend server (in one terminal):
+```bash
+cd backend
+bun run dev
+```
+
+2. Start the Electron app (in another terminal):
+```bash
+cd vtms-prototype  # root directory
+bun run dev:electron
+```
+
+The Electron app will:
+- Open automatically on `http://localhost:3000`
+- Skip backend startup in dev mode (uses your running backend server)
+- DevTools can be opened with F12 or Ctrl+Shift+I
+
+### Building Desktop Applications
+
+Build the Electron desktop app for your platform:
+
+```bash
+# Build for Windows
+bun run package:win
+
+# Build for macOS
+bun run package:mac
+
+# Build for Linux
+bun run package:linux
+
+# Build for all platforms
+bun run package:all
+```
+
+The built applications will be in the `release/` directory.
+
+For more details on Electron setup and features, see [ELECTRON_SETUP.md](ELECTRON_SETUP.md).
+
 ## 🏗️ Project Structure
 
 ```
