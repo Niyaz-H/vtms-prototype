@@ -62,19 +62,29 @@ git clone https://github.com/Niyaz-H/vtms-prototype.git
 cd vtms-prototype
 ```
 
-2. Install backend dependencies:
+2. Install all dependencies (root, backend, frontend, electron):
 ```bash
-cd backend
-bun install
-```
-
-3. Install frontend dependencies:
-```bash
-cd ../frontend
 bun install
 ```
 
 ### Running the Application
+
+#### 🚀 Quick Start (Recommended)
+Start the entire application (backend + frontend + electron) with a single command:
+
+```bash
+bun run dev
+```
+
+This will:
+- Start the backend server on `http://localhost:3001`
+- Start the frontend development server on `http://localhost:3000`
+- Launch the Electron desktop application
+- Display color-coded output for each process (blue for backend, magenta for electron)
+
+#### Manual Setup (Alternative)
+
+If you prefer to run services separately:
 
 1. Start the backend server:
 ```bash
